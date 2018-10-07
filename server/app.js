@@ -1,16 +1,16 @@
-var express         = require("express");
-var app             = express();
-var mongoose        = require("mongoose");
-var bodyParser      = require("body-parser");
-var morgan          = require("morgan");
-var config          = require("./config/config");
+var express = require("express");
+var app = express();
+var mongoose = require("mongoose");
+var bodyParser = require("body-parser");
+var morgan = require("morgan");
+var config = require("./config/config");
 
-var session         = require("express-session");
-var cookieParser    = require("cookie-parser");
-var flash           = require("connect-flash");
-var passport        = require("passport");
-var LocalStrategy   = require("passport-local").Strategy;
-var User            = require("./models/user");
+var session = require("express-session");
+var cookieParser = require("cookie-parser");
+var flash = require("connect-flash");
+var passport = require("passport");
+var LocalStrategy = require("passport-local").Strategy;
+var User = require("./models/user");
 
 // configuration
 mongoose.connect(config.database);
@@ -42,38 +42,38 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // serialize user
-passport.serializeUser(function(user, done) {
+passport.serializeUser(function (user, done) {
     done(null, user.id);
 });
 // deserialize user
-passport.deserializeUser(function(id, done) {
-    User.findById({ _id: id }, function(err, user) {
+passport.deserializeUser(function (id, done) {
+    User.findById({ _id: id }, function (err, user) {
         done(err, user);
     });
 });
 
 // passport local strategy
 passport.use(new LocalStrategy({
-        usernameField: 'name',
-        passwordField: 'password'
-    },
-    function(name, password, done) {
+    usernameField: 'name',
+    passwordField: 'password'
+},
+    function (name, password, done) {
         User.findOne({ name: name }, function (err, user) {
 
             if (err) { return done(err); }
 
-            if ( ! user) {
+            if (!user) {
                 return done(null, false, { message: "Name is not correct" });
             }
-            if( ! user.admin) {
+            if (!user.admin) {
                 return done(null, false, { message: "User is not admin" });
             }
 
-            user.validPassword(password, function(err, data) {
-                if(err) return done(err);
+            user.validPassword(password, function (err, data) {
+                if (err) return done(err);
 
-                if( ! data){
-                    return done(null, false, { message: "password is not correct"} );
+                if (!data) {
+                    return done(null, false, { message: "password is not correct" });
                 }
 
                 return done(null, user);
@@ -85,7 +85,8 @@ passport.use(new LocalStrategy({
 // post auth
 app.post('/login', passport.authenticate('local', {
     failureRedirect: '/login',
-    failureFlash: true }), function(req, res) {
+    failureFlash: true
+}), function (req, res) {
     if (req.body.remember) {
         req.session.cookie.maxAge = 1000 * 60 * 3;
     } else {
@@ -100,11 +101,11 @@ app.post('/login', passport.authenticate('local', {
 // =================================================
 
 // Route handler for www requests
-app.get('/*', function(req, res, next) {
-    if (req.headers.host.match(/^www/) !== null ) {
+app.get('/*', function (req, res, next) {
+    if (req.headers.host.match(/^www/) !== null) {
         res.redirect('http://' + req.headers.host.replace(/^www\./, '') + req.url);
     } else {
-        next();     
+        next();
     }
 });
 
@@ -112,8 +113,8 @@ app.use("/", require("./routes"));
 app.use("/admin", require("./routes/admin"));
 //app.use("/test", require("./routes/testUser"));
 
-var port = process.env.PORT || 3000;
-var server = app.listen(port, function() {
+var port = process.env.PORT || config.port || 3000;
+var server = app.listen(port, function () {
     var host = server.address().address;
     var port = server.address().port;
 
